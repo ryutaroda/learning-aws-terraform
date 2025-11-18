@@ -8,3 +8,21 @@ module "subnet" {
   env    = local.env
   vpc_id = module.vpc.id
 }
+
+module "internet_gateway" {
+  source = "../modules/aws/igw"
+  env    = local.env
+  vpc_id = module.vpc.id
+}
+
+module "route_table" {
+  source                   = "../modules/aws/route_table"
+  env                      = local.env
+  vpc_id                   = module.vpc.id
+  igw_id                   = module.internet_gateway.id
+  public_subnet_ids        = local.public_subnet_ids
+  private_nat_subnet_ids   = local.private_nat_subnet_ids
+  private_subnet_ids       = local.private_subnet_ids
+  nat_network_interface_id = ""
+}
+
