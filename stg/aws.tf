@@ -26,3 +26,8 @@ module "route_table" {
   nat_network_interface_id = ""
 }
 
+module "security_group" {
+  source = "../modules/aws/security_group"
+  env    = local.env
+  vpc_id = module.vpc.id
+}
