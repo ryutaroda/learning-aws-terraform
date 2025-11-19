@@ -31,3 +31,10 @@ module "security_group" {
   env    = local.env
   vpc_id = module.vpc.id
 }
+
+module "ecr" {
+  source = "../modules/aws/ecr"
+  env    = local.env
+}
+
+
