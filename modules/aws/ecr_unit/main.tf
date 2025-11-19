@@ -6,7 +6,7 @@ resource "aws_ecr_repository" "learning_app" {
   }
 }
 
-resource "aws_ecr_lifecycle_policy" "learning_app" {
+resource "aws_ecr_lifecycle_policy" "retain_latest_images" {
   repository = aws_ecr_repository.learning_app.name
   policy = jsonencode({
     rules = [{
