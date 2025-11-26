@@ -23,7 +23,7 @@ module "route_table" {
   public_subnet_ids        = local.public_subnet_ids
   private_nat_subnet_ids   = local.private_nat_subnet_ids
   private_subnet_ids       = local.private_subnet_ids
-  nat_network_interface_id = ""
+  nat_network_interface_id = "eni-0557213d8c1a869ef"
 }
 
 module "security_group" {
@@ -44,6 +44,12 @@ module "secret_manager" {
 
 module "sqs" {
   source     = "../modules/aws/sqs"
+  env        = local.env
+  account_id = local.account_id
+}
+
+module "iam_role" {
+  source     = "../modules/aws/iam_role"
   env        = local.env
   account_id = local.account_id
 }
