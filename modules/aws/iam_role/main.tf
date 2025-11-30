@@ -1,13 +1,45 @@
-resource "aws_iam_instance_profile" "nat_instance_role" {
-  name        = "learning-nat-instance-role-${var.env}"
-  name_prefix = null
-  path        = "/"
-  role        = "learning-nat-instance-role-${var.env}"
-  tags        = {}
-  tags_all    = {}
+resource "aws_iam_role" "nat" {
+  name = "learning-nat-instance-role-${var.env}"
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+    Version = "2012-10-17"
+  })
+  description = "Allows EC2 instances to call AWS services on your behalf."
+
+}
+resource "aws_iam_instance_profile" "nat_profile" {
+  name = aws_iam_role.nat.name
+  role = aws_iam_role.nat.name
+}
+
+resource "aws_iam_role" "bastion" {
+  name = "learning-bastion-role-${var.env}"
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+    Version = "2012-10-17"
+  })
+  description = "Allows EC2 instances to call AWS services on your behalf."
+}
+
+resource "aws_iam_instance_profile" "bastion_profile" {
+  name = aws_iam_role.bastion.name
+  role = aws_iam_role.bastion.name
 }
 
 resource "aws_iam_role" "github_actions_role" {
+  name = "learning-github-actions-role-${var.env}"
   assume_role_policy = jsonencode({
     Statement = [{
       Action = "sts:AssumeRoleWithWebIdentity"
@@ -26,15 +58,6 @@ resource "aws_iam_role" "github_actions_role" {
     }]
     Version = "2012-10-17"
   })
-  description           = null
-  force_detach_policies = false
-  max_session_duration  = 3600
-  name                  = "learning-github-actions-role-${var.env}"
-  name_prefix           = null
-  path                  = "/"
-  permissions_boundary  = null
-  tags                  = {}
-  tags_all              = {}
 }
 
 resource "aws_iam_role" "ecs_task_role" {
@@ -60,28 +83,6 @@ resource "aws_iam_role" "ecs_task_role" {
   tags_all              = {}
 }
 
-resource "aws_iam_role" "bastion" {
-  assume_role_policy = jsonencode({
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-    Version = "2012-10-17"
-  })
-  description           = "Allows EC2 instances to call AWS services on your behalf."
-  force_detach_policies = false
-  max_session_duration  = 3600
-  name                  = "learning-bastion-role-${var.env}"
-  name_prefix           = null
-  path                  = "/"
-  permissions_boundary  = null
-  tags                  = {}
-  tags_all              = {}
-}
-
 resource "aws_iam_role" "ecs_task_execution_role" {
   assume_role_policy = jsonencode({
     Statement = [{
@@ -94,13 +95,24 @@ resource "aws_iam_role" "ecs_task_execution_role" {
     }]
     Version = "2012-10-17"
   })
-  description           = "Allows ECS tasks to call AWS services on your behalf."
-  force_detach_policies = false
-  max_session_duration  = 3600
-  name                  = "learning-ecs-task-execution-role-${var.env}"
-  name_prefix           = null
-  path                  = "/"
-  permissions_boundary  = null
-  tags                  = {}
-  tags_all              = {}
+  description = "Allows ECS tasks to call AWS services on your behalf."
+  name        = aws_iam_role.ecs_task_execution_role.name
+}
+
+# ecs_task_execution_roleのinline policy
+resource "aws_iam_role_policy" "task_execution_role_s3_env_file_access" {
+  name = "S3EnvFileAccess"
+  role = "learning-ecs-task-execution-role-${var.env}"
+  policy = jsonencode({
+    Statement = [{
+      Action   = ["s3:GetObject"]
+      Effect   = "Allow"
+      Resource = ["arn:aws:s3:::learning-ryutaro-config-stg/learning-stg.env"]
+      }, {
+      Action   = ["s3:GetBucketLocation"]
+      Effect   = "Allow"
+      Resource = ["arn:aws:s3:::learning-ryutaro-config-${var.env}"]
+    }]
+    Version = "2012-10-17"
+  })
 }
